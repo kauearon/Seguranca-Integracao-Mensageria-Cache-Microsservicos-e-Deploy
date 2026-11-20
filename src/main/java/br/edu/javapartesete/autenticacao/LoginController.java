@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Value;
     import org.springframework.web.server.ResponseStatusException;
     import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 
-    // 14: endpoint propositalmente disponível somente em laboratório (profile local).
     @RestController
     @Profile("local")
     @RequestMapping("/auth")
