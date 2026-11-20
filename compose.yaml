@@ -1,0 +1,55 @@
+# 16: API encontra MySQL usando mysql (nome do serviço), nunca localhost dentro do contêiner.
+services:
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/laboratorio
+      MYSQL_USER: lab
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Defina_MYSQL_PASSWORD_no_arquivo_.env}
+      JWT_SECRET: ${JWT_SECRET:?Defina_JWT_SECRET_no_arquivo_.env}
+      LAB_USER: ${LAB_USER:-aluno}
+      LAB_PASSWORD: ${LAB_PASSWORD:?Defina_LAB_PASSWORD_no_arquivo_.env}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER:-lab}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?Defina_RABBITMQ_PASSWORD_no_arquivo_.env}
+      RABBIT_ENABLED: "true"
+      FRETES_BASE_URL: ${FRETES_BASE_URL:-http://host.docker.internal:8081}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: laboratorio
+      MYSQL_USER: lab
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Defina_MYSQL_PASSWORD_no_arquivo_.env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Defina_MYSQL_ROOT_PASSWORD_no_arquivo_.env}
+    volumes:
+      - dados_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-lab}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Defina_RABBITMQ_PASSWORD_no_arquivo_.env}
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  dados_mysql:
